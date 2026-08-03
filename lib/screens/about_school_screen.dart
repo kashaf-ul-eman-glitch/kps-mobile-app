@@ -59,7 +59,7 @@ class AboutSchoolScreen extends StatelessWidget {
                             Text(
                               '📖 About School',
                               style: GoogleFonts.poppins(
-                                color: Colors.white,
+                                color: Colors.blue,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
