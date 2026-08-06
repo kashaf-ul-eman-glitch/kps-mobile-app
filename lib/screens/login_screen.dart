@@ -56,7 +56,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+<<<<<<< HEAD
                         Container(
+=======
+Container(
+>>>>>>> 1dbb3b435680672e81fe9b66ec29db08d7e8d013
   width: 110,
   height: 110,
   decoration: const BoxDecoration(
@@ -74,7 +78,10 @@ class _LoginScreenState extends State<LoginScreen> {
 ),
 
 const SizedBox(height: 20),
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1dbb3b435680672e81fe9b66ec29db08d7e8d013
                         // Login Title
                         Text(
                           '${widget.userType} Login',
