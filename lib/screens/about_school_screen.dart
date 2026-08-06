@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:small_app_flutter/screens/select_user_screen.dart';
 
 class AboutSchoolScreen extends StatelessWidget {
   const AboutSchoolScreen({super.key});
@@ -25,11 +26,34 @@ class AboutSchoolScreen extends StatelessWidget {
           child: Container(
             color: Colors.black.withValues(alpha: 0.25),
             child: SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
+  child: SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height -
+            MediaQuery.of(context).padding.top -
+            40,
+      ),
+      child: Column(
                     children: [
+                      Container(
+  width: 110,
+  height: 110,
+  decoration: const BoxDecoration(
+    shape: BoxShape.circle,
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(10),
+    child: ClipOval(
+      child: Image.asset(
+        'assets/images/logo.jpg',
+        fit: BoxFit.contain,
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 20),
 
                       // Title
                       Text(
@@ -59,7 +83,7 @@ class AboutSchoolScreen extends StatelessWidget {
                             Text(
                               '📖 About School',
                               style: GoogleFonts.poppins(
-                                color: Colors.blue,
+                                color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -68,7 +92,7 @@ class AboutSchoolScreen extends StatelessWidget {
                             const SizedBox(height: 10),
 
                             Text(
-                              'Khyber Public School & College Mansehra is committed to providing quality education in a supportive learning environment. Our goal is to help students achieve academic excellence while developing confidence, discipline, leadership, and strong moral values.',
+                              'Khyber Public School & College Mansehra provides quality education in a safe and supportive environment, helping students achieve academic excellence and develop strong moral values.',
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -153,12 +177,12 @@ class AboutSchoolScreen extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
 
                       // Continue Button
                       SizedBox(
                         width: double.infinity,
-                        height: 55,
+                        height: 48,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.brown,
@@ -167,10 +191,11 @@ class AboutSchoolScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Login screen will be added next!'),
-                              ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute( 
+                             builder: (context) => SelectUserScreen(),
+                             ),
                             );
                           },
                           child: Text(
@@ -184,15 +209,16 @@ class AboutSchoolScreen extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 15),
                     ],
                   ),
                 ),
-              ),
+              
             ),
           ),
         ),
       ),
+    ),
     );
   }
 }
