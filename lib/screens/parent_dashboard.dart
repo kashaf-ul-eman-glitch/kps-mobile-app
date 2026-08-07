@@ -79,32 +79,17 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 'assets/images/background.jpg',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFF5F2EB),
+                  color: const Color.fromARGB(64, 245, 242, 235),
                 ),
               ),
             ),
           ),
 
-          // Overlay for readability
+          // Dark overlay for readability (replaces previous white overlay
+          // and the brown gradient header block)
           Positioned.fill(
             child: Container(
-              color: Colors.white.withValues(alpha: 0.15),
-            ),
-          ),
-
-          // Header background card
-          Container(
-            height: 220,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [darkBrown, primaryBrown],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
+              color: Colors.black.withValues(alpha: 0.45),
             ),
           ),
 
@@ -120,7 +105,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     children: [
                       Builder(
                         builder: (context) => IconButton(
-                          icon: const Icon(Icons.menu, color: Color.fromARGB(255, 121, 78, 62), size: 28),
+                          icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                           onPressed: () => Scaffold.of(context).openDrawer(),
                         ),
                       ),
@@ -133,7 +118,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const CircleAvatar(
                             backgroundColor: Colors.white24,
-                            child: Icon(Icons.school, color: Color.fromARGB(255, 90, 56, 43)),
+                            child: Icon(Icons.school, color: Colors.white),
                           ),
                         ),
                       ),
@@ -344,7 +329,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
   // --- SIDEBAR (DRAWER) ---
   Widget _buildSideBar(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFFFAF8F5),
+     backgroundColor: const Color(0xFF2B211D),
       child: Column(
         children: [
           DrawerHeader(
@@ -355,44 +340,60 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 end: Alignment.bottomRight,
               ),
             ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.school, size: 35, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Khyber Public School",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "Parent Quick Menu",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                _showProfileDialog();
+              },
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white24,
+                    child: Icon(Icons.person, size: 32, color: Colors.white),
                   ),
-                )
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Muhammad Hamza",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "View Profile",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.white70),
+                ],
+              ),
             ),
           ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               children: [
+                _buildDrawerTile(
+                  icon: Icons.person_outline,
+                  title: "My Profile",
+                  subtitle: "Student & Parent Info",
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showProfileDialog();
+                  },
+                ),
                 _buildDrawerTile(
                   icon: Icons.receipt_long_outlined,
                   title: "Fee Details & Late Charges",
@@ -432,7 +433,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
               ],
             ),
           ),
-          const Divider(),
+         const Divider(color: Colors.white24),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: Text("Logout", style: GoogleFonts.poppins(color: Colors.redAccent, fontWeight: FontWeight.bold)),
@@ -444,7 +445,6 @@ class _ParentDashboardState extends State<ParentDashboard> {
     );
   }
 
-  // ✅ UPDATED: Brown background with white text/icons
   Widget _buildDrawerTile({
     required IconData icon,
     required String title,
@@ -480,6 +480,50 @@ class _ParentDashboardState extends State<ParentDashboard> {
   }
 
   // --- DIALOGS ---
+
+  void _showProfileDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Student Profile", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: primaryBrown.withValues(alpha: 0.15),
+              child: Icon(Icons.person, size: 40, color: darkBrown),
+            ),
+            const SizedBox(height: 14),
+            Text("Muhammad Hamza", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: darkBrown)),
+            const SizedBox(height: 4),
+            Text("Class: Grade 5A | Roll No: 18", style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87)),
+            const Divider(height: 24),
+            const ListTile(
+              dense: true,
+              leading: Icon(Icons.badge_outlined),
+              title: Text("Admission No."),
+              trailing: Text("KPS-2021-118"),
+            ),
+            const ListTile(
+              dense: true,
+              leading: Icon(Icons.family_restroom_outlined),
+              title: Text("Father Name"),
+              trailing: Text("Mr. Imran Khan"),
+            ),
+            const ListTile(
+              dense: true,
+              leading: Icon(Icons.phone_outlined),
+              title: Text("Contact"),
+              trailing: Text("+92 300 1234567"),
+            ),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+      ),
+    );
+  }
 
   void _showEventsDialog() {
     showDialog(
