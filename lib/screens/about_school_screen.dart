@@ -65,7 +65,7 @@ const SizedBox(height: 20),
                           letterSpacing: 1.2,
                         ),
                       ),
-
+  
                       const SizedBox(height: 20),
 
                       // About School Card

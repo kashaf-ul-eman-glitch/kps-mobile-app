@@ -49,10 +49,6 @@ class SelectUserScreen extends StatelessWidget {
 ),
 
 const SizedBox(height: 20),
-<<<<<<< HEAD
-                    
-=======
->>>>>>> 1dbb3b435680672e81fe9b66ec29db08d7e8d013
 
                     // Welcome Text
                     Text(
@@ -109,15 +105,8 @@ const SizedBox(height: 20),
                               color: Colors.white,
                               size: 34,
                             ),
-<<<<<<< HEAD
-                          
 
                             const SizedBox(width: 20),
-                            
-=======
-
-                            const SizedBox(width: 20),
->>>>>>> 1dbb3b435680672e81fe9b66ec29db08d7e8d013
 
                             Text(
                               'Administrator',
