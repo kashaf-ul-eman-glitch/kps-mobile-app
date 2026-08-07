@@ -1,7 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'parent_dashboard.dart'; 
+import 'parent_dashboard.dart';
+import 'teacher_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   final String userType;
@@ -57,7 +58,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(10),
                             child: ClipOval(
-                              child: Image.asset('assets/images/logo.jpg', fit: BoxFit.contain),
+                              child: Image.asset(
+                                'assets/images/logo.jpg',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
@@ -140,7 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.brown,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
                             ),
                             onPressed: () {
                               String username = _usernameController.text.trim();
@@ -179,6 +185,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const ParentDashboard(),
+                                  ),
+                                );
+                              } else if (widget.userType == 'Teacher') {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TeacherDashboardScreen(),
                                   ),
                                 );
                               } else {
