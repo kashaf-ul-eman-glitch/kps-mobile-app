@@ -17,7 +17,7 @@ class TeacherDashboardScreen extends StatefulWidget {
 
   const TeacherDashboardScreen({
     super.key,
-    this.teacherName = 'Mr. Ahmed Khan',
+    this.teacherName = 'Mr . Ahmad',
     this.designation = 'Senior Science Teacher',
   });
 
@@ -34,10 +34,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildDrawer(context),
-      // Brown Color assigned to Top AppBar
+      // Transparent AppBar matching the background
       appBar: AppBar(
-        backgroundColor: Colors.brown.shade800,
-        elevation: 4,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: Row(
           children: [
             const SizedBox(width: 4),
@@ -49,7 +49,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ],
         ),
-        // Fixed Title Overflow using Expanded
+        // Wrapped with Expanded and SingleChildScrollView for smooth horizontal scrolling without overflow
         title: Row(
           children: [
             // School Logo placed inside Menu/AppBar Area
@@ -71,14 +71,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Teacher Dashboard',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Text(
+                  'Teacher Dashboard',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -118,6 +121,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           const SizedBox(width: 4),
         ],
       ),
+      extendBodyBehindAppBar: true,
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -469,21 +473,22 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  // Dark Brown Glassmorphic Transparent Navigation Drawer
+  // Fully Transparent Glassmorphic Navigation Drawer
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: Colors.transparent,
+      elevation: 0,
       child: ClipRRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
-            color: const Color(0xFF2E1C14).withValues(alpha: 0.75),
+            color: Colors.black.withValues(alpha: 0.35),
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
                 DrawerHeader(
                   decoration: BoxDecoration(
-                    color: Colors.brown.shade900.withValues(alpha: 0.8),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

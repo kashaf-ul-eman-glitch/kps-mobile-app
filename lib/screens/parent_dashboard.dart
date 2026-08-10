@@ -10,8 +10,14 @@ class ParentDashboard extends StatefulWidget {
 }
 
 class _ParentDashboardState extends State<ParentDashboard> {
-  final Color primaryBrown = const Color(0xFF8D6E63);
-  final Color darkBrown = const Color(0xFF4E342E);
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Family children (same parent account can have more than one child)
+  final List<Map<String, String>> familyChildren = [
+    {'name': 'Muhammad Hamza', 'className': 'Grade 5A', 'roll': '18'},
+    {'name': 'Ayesha Hamza', 'className': 'Grade 3B', 'roll': '09'},
+  ];
+  int _selectedChildIndex = 0;
 
   final List<Map<String, dynamic>> subjects = [
     {
@@ -67,436 +73,485 @@ class _ParentDashboardState extends State<ParentDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F2EB),
-      drawer: _buildSideBar(context),
-      body: Stack(
-        children: [
-          // Background image (blurred)
-          Positioned.fill(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Image.asset(
-                'assets/images/background.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFF5F2EB),
+      key: _scaffoldKey,
+      drawer: _buildDrawer(context),
+      // Transparent AppBar matching the background (same pattern as Teacher Dashboard)
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Row(
+          children: [
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.menu, color: Colors.white, size: 26),
+              onPressed: () {
+                _scaffoldKey.currentState?.openDrawer();
+              },
+            ),
+          ],
+        ),
+        title: Row(
+          children: [
+            // School Logo placed inside Menu/AppBar Area
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white24,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.jpg',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.school, color: Colors.white, size: 20),
                 ),
               ),
             ),
-          ),
-
-          // Overlay for readability
-          Positioned.fill(
-            child: Container(
-              color: Colors.white.withValues(alpha: 0.15),
-            ),
-          ),
-
-          // Header background card
-          Container(
-            height: 220,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [darkBrown, primaryBrown],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-          ),
-
-          // Main content
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top row: menu + logo + school name (left) ... notification bell (right)
-                  Row(
-                    children: [
-                      Builder(
-                        builder: (context) => IconButton(
-                          icon: const Icon(Icons.menu, color: Color.fromARGB(255, 121, 78, 62), size: 28),
-                          onPressed: () => Scaffold.of(context).openDrawer(),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      ClipOval(
-                        child: Image.asset(
-                          'assets/images/logo.jpg',
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const CircleAvatar(
-                            backgroundColor: Colors.white24,
-                            child: Icon(Icons.school, color: Color.fromARGB(255, 90, 56, 43)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Khyber Public School",
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "Parent Portal Dashboard",
-                            style: GoogleFonts.poppins(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_active, color: Colors.white, size: 24),
-                        onPressed: _showEventsDialog,
-                      ),
-                    ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Text(
+                  'Parent Portal Dashboard',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 20),
-
-                  // Student Profile Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Functional Notification Icon with Dialog Trigger
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined,
+                    color: Colors.white, size: 26),
+                onPressed: () {
+                  _showEventsDialog(context);
+                },
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text(
+                    '4',
+                    style: TextStyle(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        )
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Color(0xFFD7CCC8),
-                          child: Icon(Icons.person, size: 36, color: Color(0xFF4E342E)),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Muhammad Hamza",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: darkBrown,
-                                ),
-                              ),
-                              Text(
-                                "Class: Grade 5A | Roll No: 18",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-
-                  // Subjects Grid
-                  Text(
-                    "Subjects & Class Teachers",
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: subjects.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 1.05,
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = subjects[index];
-                      return InkWell(
-                        onTap: () => _showSubjectDetailsModal(item),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 25,
-                                backgroundColor: Colors.white.withValues(alpha: 0.25),
-                                child: Icon(item['icon'], color: Colors.white, size: 26),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                item['name'],
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                item['teacher'],
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.85),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 25),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.25),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 15),
 
-                  // Admin Complaint Section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [primaryBrown, darkBrown],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.lock, color: Colors.white, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Private Complaint to School Admin",
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "This complaint goes directly to Principal/Admin only.",
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: darkBrown,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: _showAdminComplaintDialog,
-                            child: const Text("Submit Direct Complaint", style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                ],
+                    // Student Header (Profile Picture placeholder)
+                    _buildWelcomeHeader(),
+
+                    const SizedBox(height: 15),
+
+                    // Detailed Student Status & Subjects Section
+                    _buildStudentStatusSection(),
+
+                    const SizedBox(height: 20),
+
+                    // Light / Transparent Quick Overview Container
+                    _buildQuickOverviewSection(),
+
+                    const SizedBox(height: 25),
+                  ],
+                ),
               ),
             ),
-          )
-        ],
+          ),
+        ),
       ),
     );
   }
 
-  // --- SIDEBAR (DRAWER) ---
-  Widget _buildSideBar(BuildContext context) {
-    return Drawer(
-      backgroundColor: const Color(0xFFFAF8F5),
-      child: Column(
+  // Student Header with Photo Placeholder
+  Widget _buildWelcomeHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          DrawerHeader(
+          // Student Profile Picture Placeholder
+          Container(
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [darkBrown, primaryBrown],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.2),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const ClipOval(
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: 38,
               ),
             ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.school, size: 35, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Khyber Public School",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "Parent Quick Menu",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
           ),
+          const SizedBox(width: 15),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDrawerTile(
-                  icon: Icons.receipt_long_outlined,
-                  title: "Fee Details & Late Charges",
-                  subtitle: "Challan status & Deadlines",
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showFeeDetailsDialog();
-                  },
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        familyChildren[_selectedChildIndex]['name']!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (familyChildren.length > 1)
+                      PopupMenuButton<int>(
+                        icon: const Icon(Icons.arrow_drop_down,
+                            color: Colors.white),
+                        color: Colors.brown.shade900,
+                        onSelected: (index) {
+                          setState(() {
+                            _selectedChildIndex = index;
+                          });
+                        },
+                        itemBuilder: (context) => List.generate(
+                          familyChildren.length,
+                          (index) => PopupMenuItem<int>(
+                            value: index,
+                            child: Text(
+                              familyChildren[index]['name']!,
+                              style: GoogleFonts.poppins(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                _buildDrawerTile(
-                  icon: Icons.calendar_month_outlined,
-                  title: "Weekly Time Table",
-                  subtitle: "Days, Subjects & Class Teachers",
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showTimeTableDialog();
-                  },
-                ),
-                _buildDrawerTile(
-                  icon: Icons.article_outlined,
-                  title: "Exams Date Sheet",
-                  subtitle: "Upcoming Examination Schedule",
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showDateSheetDialog();
-                  },
-                ),
-                _buildDrawerTile(
-                  icon: Icons.rate_review_outlined,
-                  title: "Teacher Review & Behavior",
-                  subtitle: "Class Participation & Activity Report",
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showTeacherReviewDialog();
-                  },
+                Text(
+                  'Class: ${familyChildren[_selectedChildIndex]['className']}  |  Roll No: ${familyChildren[_selectedChildIndex]['roll']}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.white70,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: Text("Logout", style: GoogleFonts.poppins(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-            onTap: () => Navigator.pop(context),
-          ),
-          const SizedBox(height: 10),
         ],
       ),
     );
   }
 
-  // ✅ UPDATED: Brown background with white text/icons
-  Widget _buildDrawerTile({
+  // Comprehensive Student Status & Subject List
+  Widget _buildStudentStatusSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Khyber Public School',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Attendance: Present',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Subjects & Class Teachers:',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...subjects.map((item) => _buildSubjectTile(item)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubjectTile(Map<String, dynamic> item) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: InkWell(
+        onTap: () => _showSubjectDetailsModal(item),
+        child: Row(
+          children: [
+            Icon(item['icon'], color: Colors.white70, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${item['name']}  •  ${item['teacher']}',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white54, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickOverviewSection() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.brown.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Overview',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 15),
+          _buildInfoCard(
+            icon: Icons.receipt_long_outlined,
+            title: 'Fee Due Date',
+            subtitle: 'Rs. 7,300 payable by the 10th of every month',
+            onTap: _showFeeDetailsDialog,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoCard(
+            icon: Icons.article_outlined,
+            title: 'Mid-Term Exams',
+            subtitle: 'Mathematics paper on Monday, 10th Nov',
+            onTap: _showDateSheetDialog,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoCard(
+            icon: Icons.groups_outlined,
+            title: 'PTM Meeting',
+            subtitle:
+                'Parent-Teacher meeting scheduled for 30th of this month',
+            onTap: () => _showEventsDialog(context),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.brown.shade900,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: _showAdminComplaintDialog,
+              icon: const Icon(Icons.lock_outline),
+              label: const Text(
+                'Submit Direct Complaint to Admin',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
-    return Card(
-      elevation: 0,
-      color: primaryBrown,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.white),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            color: Colors.white,
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(15),
         ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: Colors.white70,
-          ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.white70),
-        onTap: onTap,
       ),
     );
   }
 
   // --- DIALOGS ---
 
-  void _showEventsDialog() {
+  void _showEventsDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Notifications & Activities", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        title: Text(
+          'Notifications & Activities',
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildNotificationItem("Annual Picnic Trip", "Trip to Khanpur Dam on 25th Oct. Ticket Rs. 1500.", Icons.directions_bus),
-            _buildNotificationItem("Sports Week 2026", "Inter-house sports competitions starting next Monday.", Icons.sports_cricket),
-            _buildNotificationItem("Quiz Competition", "Science & Math quiz for Grade 5 on Friday.", Icons.emoji_events),
-            _buildNotificationItem("PTM Meeting", "Parent-Teacher meeting scheduled for 30th of this month.", Icons.groups),
+            _buildNotificationItem(
+                'Annual Picnic Trip - Khanpur Dam on 25th Oct. Ticket Rs. 1500.'),
+            const Divider(color: Colors.white24),
+            _buildNotificationItem(
+                'Sports Week 2026 - Inter-house sports competitions start next Monday.'),
+            const Divider(color: Colors.white24),
+            _buildNotificationItem(
+                'Quiz Competition - Science & Math quiz for Grade 5 on Friday.'),
+            const Divider(color: Colors.white24),
+            _buildNotificationItem(
+                'PTM Meeting scheduled for the 30th of this month.'),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.circle, size: 8, color: Colors.amber),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -505,33 +560,70 @@ class _ParentDashboardState extends State<ParentDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Fee Schedule & Notifications", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        title: Text(
+          'Fee Schedule & Notifications',
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.orange)),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange),
+              ),
               child: Row(
                 children: [
                   const Icon(Icons.warning_amber_rounded, color: Colors.orange),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text("Due Date: 10th of every month. Rs. 500 Late Fee applies after deadline.", style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange.shade900)),
+                    child: Text(
+                      'Due Date: 10th of every month. Rs. 500 Late Fee applies after deadline.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: Colors.orange.shade100),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            const ListTile(title: Text("Monthly Tuition Fee"), trailing: Text("Rs. 6,500", style: TextStyle(fontWeight: FontWeight.bold))),
-            const ListTile(title: Text("Computer & Lab Charges"), trailing: Text("Rs. 800", style: TextStyle(fontWeight: FontWeight.bold))),
-            const Divider(),
-            const ListTile(title: Text("Total Payable", style: TextStyle(fontWeight: FontWeight.bold)), trailing: Text("Rs. 7,300", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.brown))),
+            ListTile(
+              title: Text('Monthly Tuition Fee',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              trailing: Text('Rs. 6,500',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            ListTile(
+              title: Text('Computer & Lab Charges',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+              trailing: Text('Rs. 800',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            const Divider(color: Colors.white24),
+            ListTile(
+              title: Text('Total Payable',
+                  style: GoogleFonts.poppins(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+              trailing: Text('Rs. 7,300',
+                  style: GoogleFonts.poppins(
+                      color: Colors.amber, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
@@ -540,23 +632,49 @@ class _ParentDashboardState extends State<ParentDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Weekly Time Table", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        title: Text(
+          'Weekly Time Table',
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView(
             shrinkWrap: true,
-            children: const [
-              ListTile(leading: CircleAvatar(child: Text("Mon")), title: Text("Maths, English, Science"), subtitle: Text("Teachers: Mr. Asif, Ms. Ayesha")),
-              ListTile(leading: CircleAvatar(child: Text("Tue")), title: Text("Urdu, Computer, Islamiyat"), subtitle: Text("Teachers: Mrs. Farhana, Engr. Bilal")),
-              ListTile(leading: CircleAvatar(child: Text("Wed")), title: Text("Science Lab & Mathematics"), subtitle: Text("Teachers: Dr. Tariq, Mr. Asif")),
-              ListTile(leading: CircleAvatar(child: Text("Thu")), title: Text("English Grammar & Urdu"), subtitle: Text("Teachers: Ms. Ayesha, Mrs. Farhana")),
-              ListTile(leading: CircleAvatar(child: Text("Fri")), title: Text("Computer Lab & Sports Activity"), subtitle: Text("Teachers: Engr. Bilal, Sports Dept")),
+            children: [
+              _buildTimeTableTile('Mon', 'Maths, English, Science',
+                  'Teachers: Mr. Asif, Ms. Ayesha'),
+              _buildTimeTableTile('Tue', 'Urdu, Computer, Islamiyat',
+                  'Teachers: Mrs. Farhana, Engr. Bilal'),
+              _buildTimeTableTile('Wed', 'Science Lab & Mathematics',
+                  'Teachers: Dr. Tariq, Mr. Asif'),
+              _buildTimeTableTile('Thu', 'English Grammar & Urdu',
+                  'Teachers: Ms. Ayesha, Mrs. Farhana'),
+              _buildTimeTableTile('Fri', 'Computer Lab & Sports Activity',
+                  'Teachers: Engr. Bilal, Sports Dept'),
             ],
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildTimeTableTile(String day, String subjectsText, String teachersText) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Colors.white24,
+        child: Text(day, style: const TextStyle(color: Colors.white, fontSize: 11)),
+      ),
+      title: Text(subjectsText, style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+      subtitle: Text(teachersText, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11)),
     );
   }
 
@@ -564,19 +682,36 @@ class _ParentDashboardState extends State<ParentDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Mid-Term Exam Date Sheet", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        title: Text(
+          'Mid-Term Exam Date Sheet',
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            ListTile(title: Text("Mathematics"), subtitle: Text("Monday, 10th Nov | 09:00 AM")),
-            ListTile(title: Text("English Paper"), subtitle: Text("Wednesday, 12th Nov | 09:00 AM")),
-            ListTile(title: Text("General Science"), subtitle: Text("Friday, 14th Nov | 09:00 AM")),
-            ListTile(title: Text("Computer Studies"), subtitle: Text("Monday, 17th Nov | 09:00 AM")),
+          children: [
+            _buildDateSheetTile('Mathematics', 'Monday, 10th Nov | 09:00 AM'),
+            _buildDateSheetTile('English Paper', 'Wednesday, 12th Nov | 09:00 AM'),
+            _buildDateSheetTile('General Science', 'Friday, 14th Nov | 09:00 AM'),
+            _buildDateSheetTile('Computer Studies', 'Monday, 17th Nov | 09:00 AM'),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildDateSheetTile(String subject, String schedule) {
+    return ListTile(
+      title: Text(subject, style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+      subtitle: Text(schedule, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11)),
     );
   }
 
@@ -584,50 +719,46 @@ class _ParentDashboardState extends State<ParentDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Teacher Performance Review", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+        title: Text(
+          'Teacher Performance Review',
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Class Participation: Excellent (85%)", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 13)),
+            Text('Class Participation: Excellent (85%)',
+                style: GoogleFonts.poppins(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 5),
-            Text("Behavior & Discipline: Good & Respectful", style: GoogleFonts.poppins(fontSize: 12, color: Colors.green[800])),
+            Text('Behavior & Discipline: Good & Respectful',
+                style: GoogleFonts.poppins(color: Colors.greenAccent, fontSize: 12)),
             const SizedBox(height: 10),
-            Text("Overall Teacher Review:", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12)),
+            Text('Overall Teacher Review:',
+                style: GoogleFonts.poppins(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
             const SizedBox(height: 5),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Text(
-                "Hamza is active in practical sessions, especially Computer and Science. Homework submission speed needs a little improvement in Mathematics.",
-                style: GoogleFonts.poppins(fontSize: 11),
+                'Hamza is active in practical sessions, especially Computer and Science. Homework submission speed needs a little improvement in Mathematics.',
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 11),
               ),
             )
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))],
-      ),
-    );
-  }
-
-  Widget _buildNotificationItem(String title, String desc, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: darkBrown, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12)),
-                Text(desc, style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[700])),
-              ],
-            ),
-          )
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -666,8 +797,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: primaryBrown.withValues(alpha: 0.15),
-                    child: Icon(item['icon'], color: darkBrown),
+                    backgroundColor: Colors.brown.withValues(alpha: 0.15),
+                    child: Icon(item['icon'], color: Colors.brown.shade800),
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -675,9 +806,13 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     children: [
                       Text(
                         item['name'],
-                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: darkBrown),
+                        style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.brown.shade800),
                       ),
-                      Text("Teacher: ${item['teacher']}", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      Text("Teacher: ${item['teacher']}",
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     ],
                   )
                 ],
@@ -688,20 +823,25 @@ class _ParentDashboardState extends State<ParentDashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Assignments", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+                      Text('Assignments',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold, color: Colors.brown.shade800)),
                       const SizedBox(height: 8),
                       ...(item['assignments'] as List<String>).map((task) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle_outline, color: Colors.brown, size: 16),
-                            const SizedBox(width: 8),
-                            Text(task, style: GoogleFonts.poppins(fontSize: 13)),
-                          ],
-                        ),
-                      )),
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle_outline,
+                                    color: Colors.brown, size: 16),
+                                const SizedBox(width: 8),
+                                Text(task, style: GoogleFonts.poppins(fontSize: 13)),
+                              ],
+                            ),
+                          )),
                       const SizedBox(height: 20),
-                      Text("Teacher Remarks", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+                      Text('Teacher Remarks',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold, color: Colors.brown.shade800)),
                       const SizedBox(height: 8),
                       Container(
                         width: double.infinity,
@@ -714,7 +854,9 @@ class _ParentDashboardState extends State<ParentDashboard> {
                         child: Text(item['teacherComplaint'], style: GoogleFonts.poppins(fontSize: 12)),
                       ),
                       const SizedBox(height: 20),
-                      Text("Term-Wise Examination Marks", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
+                      Text('Term-Wise Examination Marks',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold, color: Colors.brown.shade800)),
                       const SizedBox(height: 10),
                       Row(
                         children: (item['marks'] as Map<String, String>).entries.map((e) {
@@ -725,18 +867,24 @@ class _ParentDashboardState extends State<ParentDashboard> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFAF8F5),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: primaryBrown.withValues(alpha: 0.2)),
+                                border: Border.all(color: Colors.brown.withValues(alpha: 0.2)),
                               ),
                               child: Column(
                                 children: [
                                   Text(
                                     e.key,
-                                    style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: primaryBrown),
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.brown),
                                   ),
                                   const SizedBox(height: 5),
                                   Text(
                                     e.value,
-                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: darkBrown),
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.brown.shade800),
                                   )
                                 ],
                               ),
@@ -757,44 +905,193 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
   void _showAdminComplaintDialog() {
     final TextEditingController complaintController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text("Private Complaint to Admin", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: darkBrown)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("This will be sent directly to Admin (Teachers cannot see this).", style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-              const SizedBox(height: 12),
-              TextField(
-                controller: complaintController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Enter complaint detail...",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              )
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: primaryBrown),
-              onPressed: () {
-                if (complaintController.text.isNotEmpty) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Submitted directly to Admin!"), backgroundColor: Colors.green),
-                  );
-                }
-              },
-              child: const Text("Send", style: TextStyle(color: Colors.white)),
-            )
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.brown.shade900,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.security, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              'Private Complaint',
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+            ),
           ],
-        );
-      },
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Type your message below. This note is sent directly to school management and remains completely confidential.',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: complaintController,
+              maxLines: 4,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Enter your concern or feedback here...',
+                hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.white54),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white38),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.brown.shade900,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              if (complaintController.text.trim().isNotEmpty) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Your direct complaint has been submitted securely to the Admin.'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Fully Transparent Glassmorphic Navigation Drawer (same pattern as Teacher Dashboard)
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.35),
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.white24,
+                        child: Icon(Icons.school, color: Colors.white, size: 34),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Khyber Public School',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Parent Quick Menu',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                _buildDrawerItem(
+                  icon: Icons.receipt_long_outlined,
+                  title: 'Fee Details & Late Charges',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showFeeDetailsDialog();
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.calendar_month_outlined,
+                  title: 'Weekly Time Table',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showTimeTableDialog();
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.article_outlined,
+                  title: 'Exams Date Sheet',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showDateSheetDialog();
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.rate_review_outlined,
+                  title: 'Teacher Review & Behavior',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showTeacherReviewDialog();
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.report_problem_outlined,
+                  title: 'Submit Complaint to Admin',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showAdminComplaintDialog();
+                  },
+                ),
+                const Divider(color: Colors.white24),
+                _buildDrawerItem(
+                  icon: Icons.logout,
+                  title: 'Logout',
+                  onTap: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+      ),
+      onTap: onTap,
     );
   }
 }

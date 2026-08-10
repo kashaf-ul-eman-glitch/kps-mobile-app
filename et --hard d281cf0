@@ -1,0 +1,8 @@
+[33m7b1730b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to 7b1730b
+[33md281cf0[m HEAD@{1}: rebase (finish): returning to refs/heads/main
+[33md281cf0[m HEAD@{2}: rebase (continue): Implemented the full Teacher Dashboard UI including the notification bell icon, navigation menu, and key feature widgets (Upload Marks, Assign Homework, Announcements, Complaints, and Time Table/Lecture schedule). Also updated the Login screen button to its default state and connected the navigation to the next screen.
+[33m7b1730b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: pull origin main --rebase (start): checkout 7b1730bdaf12109fc379eb010876a9b011beb584
+[33ma1b615b[m HEAD@{4}: commit: Implemented the full Teacher Dashboard UI including the notification bell icon, navigation menu, and key feature widgets (Upload Marks, Assign Homework, Announcements, Complaints, and Time Table/Lecture schedule). Also updated the Login screen button to its default state and connected the navigation to the next screen.
+[33m1dbb3b4[m HEAD@{5}: pull: Merge made by the 'ort' strategy.
+[33mf5bb1ec[m HEAD@{6}: commit: Added Scroll View in About Screen, Added Login Screen, Select User Screen
+[33mc74ab1d[m HEAD@{7}: clone: from https://github.com/Khyber-Public-School-College/small_app_flutter.git
