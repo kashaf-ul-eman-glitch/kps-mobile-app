@@ -1,16 +1,18 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'parent_dashboard.dart';
 import 'teacher_dashboard.dart';
+import 'admin_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String userType;
-
   const LoginScreen({
     super.key,
     required this.userType,
   });
+
+  final String userType;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -180,7 +182,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return;
                               }
 
-                              if (widget.userType == 'Parent') {
+                              if (widget.userType == 'Administrator') {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AdminDashboard(),
+                                  ),
+                                );
+                              } else if (widget.userType == 'Parent') {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -224,12 +233,5 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }
