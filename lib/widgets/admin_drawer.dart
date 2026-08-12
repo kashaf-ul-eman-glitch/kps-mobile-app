@@ -14,6 +14,7 @@ import '../screens/complaints_screen.dart';
 import '../screens/reports_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/academic_calendar_screen.dart';
+import '../screens/fee_management_screen.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key});
@@ -226,6 +227,31 @@ ListTile(
     ),
   );
 },
+),
+ListTile(
+  leading: const Icon(
+    Icons.payments_outlined,
+    color: Colors.white,
+  ),
+  title: Text(
+    "Fee Management",
+    style: GoogleFonts.poppins(
+      color: Colors.white,
+      fontSize: 16,
+    ),
+  ),
+  trailing: const Icon(
+    Icons.chevron_right,
+    color: Colors.white,
+  ),
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FeeManagementScreen(),
+      ),
+    );
+  },
 ),
 
 ListTile(
