@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'users_list_screen.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -803,7 +804,17 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     _showAdminComplaintDialog();
                   },
                 ),
-
+_buildDrawerItem(
+                  icon: Icons.people_outline,
+                  title: 'View Users',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UsersListScreen()),
+                    );
+                  },
+                ),
                 const Divider(
                   color: Colors.white24,
                 ),

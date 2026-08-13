@@ -10,6 +10,7 @@ import 'post_homework_screen.dart';
 import 'upload_marks_screen.dart';
 import 'post_announcement_screen.dart';
 import 'submit_complaint_screen.dart';
+import 'users_list_screen.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   final String teacherName;
@@ -49,10 +50,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ],
         ),
-        // Wrapped with Expanded and SingleChildScrollView for smooth horizontal scrolling without overflow
         title: Row(
           children: [
-            // School Logo placed inside Menu/AppBar Area
             Container(
               width: 32,
               height: 32,
@@ -87,7 +86,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ],
         ),
         actions: [
-          // Functional Notification Icon with Dialog Trigger
           Stack(
             children: [
               IconButton(
@@ -142,18 +140,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 15),
-
-                    // Teacher Header (Profile Picture placeholder)
                     _buildWelcomeHeader(),
-
                     const SizedBox(height: 15),
-
-                    // Detailed Job Status & Subject Timings Section
                     _buildTeacherStatusSection(),
-
                     const SizedBox(height: 20),
-
-                    // Light / Transparent Quick Overview Container
                     Container(
                       width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -198,7 +188,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 25),
                   ],
                 ),
@@ -210,13 +199,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  // Teacher Header with Photo Placeholder
   Widget _buildWelcomeHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          // Teacher Profile Picture Placeholder
           Container(
             width: 60,
             height: 60,
@@ -263,7 +250,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  // Comprehensive Teacher Job & Daily Schedule Status
   Widget _buildTeacherStatusSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -420,7 +406,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  // Functional Notifications Action Dialog
   void _showNotificationsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -473,7 +458,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  // Fully Transparent Glassmorphic Navigation Drawer
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -567,6 +551,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   title: 'Submit Complaint',
                   onTap: () =>
                       _navigateTo(context, const SubmitComplaintScreen()),
+                ),
+                _buildDrawerItem(
+                  icon: Icons.people_outline,
+                  title: 'View Users',
+                  onTap: () => _navigateTo(context, const UsersListScreen()),
                 ),
                 const Divider(color: Colors.white24),
                 _buildDrawerItem(

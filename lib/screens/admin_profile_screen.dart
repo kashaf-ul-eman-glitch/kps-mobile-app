@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
@@ -59,7 +60,6 @@ class AdminProfileScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // Keeps title centered
                         const SizedBox(width: 48),
                       ],
                     ),
@@ -67,95 +67,134 @@ class AdminProfileScreen extends StatelessWidget {
                     const SizedBox(height: 30),
 
                     // =========================
-                    // Profile Picture
+                    // Firestore Data (StreamBuilder)
                     // =========================
 
-                    Container(
-  width: 120,
-  height: 120,
-  decoration: const BoxDecoration(
-    color: Colors.white,
-    shape: BoxShape.circle,
-  ),
-  child: const Icon(
-    Icons.person,
-    color: Colors.grey,
-    size: 70,
-  ),
-),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .where('role', isEqualTo: 'Admin')
+                          .limit(1)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          );
+                        }
 
+                        if (snapshot.hasError) {
+                          return Text(
+                            'Error: ${snapshot.error}',
+                            style: const TextStyle(color: Colors.white),
+                          );
+                        }
 
+                        if (!snapshot.hasData ||
+                            snapshot.data!.docs.isEmpty) {
+                          return const Text(
+                            'Admin data not found',
+                            style: TextStyle(color: Colors.white),
+                          );
+                        }
 
-                    const SizedBox(height: 18),
+                        final data = snapshot.data!.docs.first.data()
+                            as Map<String, dynamic>;
 
-                    Text(
-                      "Administrator Name",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                        final name = data['name'] ?? 'Administrator';
+                        final email = data['email'] ?? 'admin@example.com';
+                        final phone = data['phone'] ?? '03XX-XXXXXXX';
+                        final role = data['role'] ?? 'Administrator';
 
-                    const SizedBox(height: 5),
+                        return Column(
+                          children: [
+                            // Profile Picture
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.grey,
+                                size: 70,
+                              ),
+                            ),
 
-                    Text(
-                      "Administrator",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 15,
-                      ),
-                    ),
+                            const SizedBox(height: 18),
 
-                    const SizedBox(height: 30),
+                            Text(
+                              name,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-                    // =========================
-                    // Personal Information
-                    // =========================
+                            const SizedBox(height: 5),
 
-                    _profileCard(
-                      title: "Personal Information",
-                      children: [
-                        _profileItem(
-                          Icons.person_outline,
-                          "Name",
-                          "Administrator",
-                        ),
-                        _profileItem(
-                          Icons.email_outlined,
-                          "Email",
-                          "admin@example.com",
-                        ),
-                        _profileItem(
-                          Icons.phone_outlined,
-                          "Phone",
-                          "03XX-XXXXXXX",
-                        ),
-                      ],
-                    ),
+                            Text(
+                              role,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white70,
+                                fontSize: 15,
+                              ),
+                            ),
 
-                    const SizedBox(height: 20),
+                            const SizedBox(height: 30),
 
-                    // =========================
-                    // Role Information
-                    // =========================
+                            // Personal Information
+                            _profileCard(
+                              title: "Personal Information",
+                              children: [
+                                _profileItem(
+                                  Icons.person_outline,
+                                  "Name",
+                                  name,
+                                ),
+                                _profileItem(
+                                  Icons.email_outlined,
+                                  "Email",
+                                  email,
+                                ),
+                                _profileItem(
+                                  Icons.phone_outlined,
+                                  "Phone",
+                                  phone,
+                                ),
+                              ],
+                            ),
 
-                    _profileCard(
-                      title: "Role Information",
-                      children: [
-                        _profileItem(
-                          Icons.admin_panel_settings_outlined,
-                          "Role",
-                          "Administrator",
-                        ),
-                        _profileItem(
-                          Icons.school_outlined,
-                          "School",
-                          "Khyber Public School & College",
-                        ),
-                      ],
+                            const SizedBox(height: 20),
+
+                            // Role Information
+                            _profileCard(
+                              title: "Role Information",
+                              children: [
+                                _profileItem(
+                                  Icons.admin_panel_settings_outlined,
+                                  "Role",
+                                  role,
+                                ),
+                                _profileItem(
+                                  Icons.school_outlined,
+                                  "School",
+                                  "Khyber Public School & College",
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 25),
