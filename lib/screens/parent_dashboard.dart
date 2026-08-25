@@ -1,8 +1,9 @@
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'users_list_screen.dart';
 
 class ParentDashboard extends StatefulWidget {
   const ParentDashboard({super.key});
@@ -18,21 +19,66 @@ class _ParentDashboardState extends State<ParentDashboard> {
   static const Color darkBrown = Color(0xFF3E2723);
   static const Color primaryBrown = Color(0xFF795548);
 
-  // Family children (same parent account can have more than one child)
-  final List<Map<String, String>> familyChildren = [
-    {
-      'name': 'Muhammad Hamza',
-      'className': 'Grade 5A',
-      'roll': '18',
-    },
-    {
-      'name': 'Ayesha Hamza',
-      'className': 'Grade 3B',
-      'roll': '09',
-    },
-  ];
+  // ------------------------------------------------------------
+  // REAL DATA: loaded from Firestore (classes/{class}/students),
+  // filtered by parentUid so a parent only ever sees their own
+  // child/children — replaces the old hardcoded list.
+  // ------------------------------------------------------------
+  List<Map<String, dynamic>> familyChildren = [];
+  bool _isLoadingChildren = true;
+  String? _loadError;
 
   int _selectedChildIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChildren();
+  }
+
+  Future<void> _loadChildren() async {
+    final String? uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      setState(() {
+        _isLoadingChildren = false;
+        _loadError = 'Please log in to view your dashboard.';
+      });
+      return;
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('students')
+          .where('parentUid', isEqualTo: uid)
+          .get();
+
+      final List<Map<String, dynamic>> loaded = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'name': (data['studentName'] ?? '').toString(),
+          'className': (data['class'] ?? '').toString(),
+          'section': (data['section'] ?? '').toString(),
+          'roll': (data['rollNo'] ?? '').toString(),
+          'admissionNo': (data['admissionNo'] ?? '').toString(),
+          'fatherName': (data['fatherName'] ?? '').toString(),
+          'phone': (data['fatherPhone'] ?? '').toString(),
+          'photoUrl': (data['photoUrl'] ?? '').toString(),
+        };
+      }).toList();
+
+      setState(() {
+        familyChildren = loaded;
+        _selectedChildIndex = 0;
+        _isLoadingChildren = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingChildren = false;
+        _loadError = 'Could not load your admissions: $e';
+      });
+    }
+  }
 
   final List<Map<String, dynamic>> subjects = [
     {
@@ -259,31 +305,73 @@ class _ParentDashboardState extends State<ParentDashboard> {
             color: Colors.black.withValues(alpha: 0.25),
 
             child: SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 15),
-
-                    _buildWelcomeHeader(),
-
-                    const SizedBox(height: 15),
-
-                    _buildStudentStatusSection(),
-
-                    const SizedBox(height: 20),
-
-                    _buildQuickOverviewSection(),
-
-                    const SizedBox(height: 25),
-                  ],
-                ),
-              ),
+              child: _buildBody(),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // Body: loading / empty / real content — this is the only part
+  // that decides WHETHER the rest of the dashboard renders, so
+  // an empty or failed Firestore fetch can never blank out the
+  // whole screen anymore (that was the earlier bug).
+  // ------------------------------------------------------------
+  Widget _buildBody() {
+    if (_isLoadingChildren) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    if (_loadError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            _loadError!,
+            style: const TextStyle(color: Colors.white70),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    if (familyChildren.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.info_outline, color: Colors.white70, size: 40),
+              const SizedBox(height: 12),
+              Text(
+                'No admission record found yet.\nSubmit the admission form to see your child\'s dashboard here.',
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 15),
+          _buildWelcomeHeader(),
+          const SizedBox(height: 15),
+          _buildStudentStatusSection(),
+          const SizedBox(height: 20),
+          _buildQuickOverviewSection(),
+          const SizedBox(height: 25),
+        ],
       ),
     );
   }
@@ -294,6 +382,11 @@ class _ParentDashboardState extends State<ParentDashboard> {
 
   Widget _buildWelcomeHeader() {
     final child = familyChildren[_selectedChildIndex];
+    final String photoUrl = (child['photoUrl'] ?? '').toString();
+    final String classLine = [
+      if ((child['className'] ?? '').toString().isNotEmpty) child['className'],
+      if ((child['section'] ?? '').toString().isNotEmpty) child['section'],
+    ].join(' - ');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -310,12 +403,19 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 width: 2,
               ),
             ),
-            child: const ClipOval(
-              child: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 38,
-              ),
+            child: ClipOval(
+              child: photoUrl.isNotEmpty
+                  ? Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.person, color: Colors.white, size: 38),
+                    )
+                  : const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 38,
+                    ),
             ),
           ),
 
@@ -329,7 +429,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                   children: [
                     Flexible(
                       child: Text(
-                        child['name']!,
+                        (child['name'] ?? '').toString(),
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -358,7 +458,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                               return PopupMenuItem<int>(
                                 value: index,
                                 child: Text(
-                                  familyChildren[index]['name']!,
+                                  (familyChildren[index]['name'] ?? '').toString(),
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
                                   ),
@@ -372,7 +472,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 ),
 
                 Text(
-                  'Class: ${child['className']}  |  Roll No: ${child['roll']}',
+                  'Class: $classLine  |  Roll No: ${child['roll'] ?? ''}',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: Colors.white70,
@@ -804,17 +904,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     _showAdminComplaintDialog();
                   },
                 ),
-_buildDrawerItem(
-                  icon: Icons.people_outline,
-                  title: 'View Users',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const UsersListScreen()),
-                    );
-                  },
-                ),
+
                 const Divider(
                   color: Colors.white24,
                 ),
@@ -862,6 +952,15 @@ _buildDrawerItem(
   // ------------------------------------------------------------
 
   void _showProfileDialog() {
+    final child = familyChildren.isNotEmpty
+        ? familyChildren[_selectedChildIndex]
+        : <String, dynamic>{};
+
+    final String classLine = [
+      if ((child['className'] ?? '').toString().isNotEmpty) child['className'],
+      if ((child['section'] ?? '').toString().isNotEmpty) child['section'],
+    ].join(' - ');
+
     showDialog(
       context: context,
 
@@ -897,7 +996,7 @@ _buildDrawerItem(
               const SizedBox(height: 14),
 
               Text(
-                "Muhammad Hamza",
+                (child['name'] ?? '').toString(),
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -908,7 +1007,7 @@ _buildDrawerItem(
               const SizedBox(height: 4),
 
               Text(
-                "Class: Grade 5A | Roll No: 18",
+                "Class: $classLine | Roll No: ${child['roll'] ?? ''}",
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.black87,
@@ -917,27 +1016,27 @@ _buildDrawerItem(
 
               const Divider(height: 24),
 
-              const ListTile(
+              ListTile(
                 dense: true,
-                leading: Icon(Icons.badge_outlined),
-                title: Text("Admission No."),
-                trailing: Text("KPS-2021-118"),
+                leading: const Icon(Icons.badge_outlined),
+                title: const Text("Admission No."),
+                trailing: Text((child['admissionNo'] ?? '').toString()),
               ),
 
-              const ListTile(
+              ListTile(
                 dense: true,
-                leading: Icon(
+                leading: const Icon(
                   Icons.family_restroom_outlined,
                 ),
-                title: Text("Father Name"),
-                trailing: Text("Mr. Imran Khan"),
+                title: const Text("Father Name"),
+                trailing: Text((child['fatherName'] ?? '').toString()),
               ),
 
-              const ListTile(
+              ListTile(
                 dense: true,
-                leading: Icon(Icons.phone_outlined),
-                title: Text("Contact"),
-                trailing: Text("+92 300 1234567"),
+                leading: const Icon(Icons.phone_outlined),
+                title: const Text("Contact"),
+                trailing: Text((child['phone'] ?? '').toString()),
               ),
             ],
           ),
