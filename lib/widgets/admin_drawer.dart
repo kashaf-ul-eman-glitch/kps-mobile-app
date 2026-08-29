@@ -13,7 +13,8 @@ import '../screens/reports_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/academic_calendar_screen.dart';
 import '../screens/fee_management_screen.dart';
-import '../screens/admission_form_screen.dart'; // Fixed missing semicolon
+import '../screens/admission_form_screen.dart'; 
+import '../screens/subject_management_screen.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key});
@@ -173,7 +174,37 @@ class AdminDrawer extends StatelessWidget {
                           );
                         },
                       ),
+// =========================
+// Subject Management
+// =========================
+ListTile(
+  leading: const Icon(
+    Icons.menu_book,
+    color: Colors.white,
+  ),
+  title: Text(
+    "Subject Management",
+    style: GoogleFonts.poppins(
+      color: Colors.white,
+      fontSize: 16,
+    ),
+  ),
+  trailing: const Icon(
+    Icons.chevron_right,
+    color: Colors.white,
+  ),
+  onTap: () {
+    Navigator.pop(context);
 
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            SubjectManagementScreen(),
+      ),
+    );
+  },
+),
                       // =========================
                       // Admission Form
                       // =========================
