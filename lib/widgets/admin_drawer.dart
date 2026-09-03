@@ -2,19 +2,20 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../screens/about_app_screen.dart';
 import '../screens/admin_profile_screen.dart';
-import '../screens/notifications_screen.dart';
-import '../screens/school_setup_screen.dart';
+import 'package:small_app_flutter/screens/notifications_screen.dart';
 import '../screens/teacher_management_screen.dart';
 import '../screens/attendance_screen.dart';
 import '../screens/complaints_screen.dart';
-import '../screens/reports_screen.dart';
-import '../screens/settings_screen.dart';
-import '../screens/academic_calendar_screen.dart';
+import '../screens/academic_calendar_admin_screen.dart';
 import '../screens/fee_management_screen.dart';
-import '../screens/admission_form_screen.dart'; 
+import '../screens/admission_form_screen.dart';
 import '../screens/subject_management_screen.dart';
+import '../screens/admin_datesheet_screen.dart';
+import '../screens/admin_management_screen.dart';
+import '../screens/admin_add_timetable_screen.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key});
@@ -38,6 +39,9 @@ class AdminDrawer extends StatelessWidget {
                   color: Colors.transparent,
                   child: Column(
                     children: [
+                      // =========================
+                      // Logo
+                      // =========================
                       Container(
                         width: 100,
                         height: 100,
@@ -57,6 +61,9 @@ class AdminDrawer extends StatelessWidget {
 
                       const SizedBox(height: 20),
 
+                      // =========================
+                      // Administrator
+                      // =========================
                       Text(
                         "Administrator",
                         style: GoogleFonts.poppins(
@@ -75,6 +82,9 @@ class AdminDrawer extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
+                      // =========================
+                      // My Profile
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.person,
@@ -92,15 +102,46 @@ class AdminDrawer extends StatelessWidget {
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AdminProfileScreen(),
+                              builder: (context) =>
+                                  const AdminProfileScreen(),
                             ),
                           );
                         },
                       ),
+ListTile(
+  leading: const Icon(
+    Icons.admin_panel_settings_rounded,
+    color: Colors.white,
+  ),
+  title: Text(
+    'Admin Management',
+    style: GoogleFonts.poppins(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+  ),
+  onTap: () {
+    // Drawer close karein
+    Navigator.pop(context);
 
+    // Admin Management screen par navigate karein
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AdminManagementScreen(),
+      ),
+    );
+  },
+),
+                      // =========================
+                      // Dashboard
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.dashboard,
@@ -122,32 +163,9 @@ class AdminDrawer extends StatelessWidget {
                         },
                       ),
 
-                      ListTile(
-                        leading: const Icon(
-                          Icons.business,
-                          color: Colors.white,
-                        ),
-                        title: Text(
-                          "School Setup",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white,
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SchoolSetupScreen(),
-                            ),
-                          );
-                        },
-                      ),
-
+                      // =========================
+                      // Teacher Management
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.co_present,
@@ -165,6 +183,8 @@ class AdminDrawer extends StatelessWidget {
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -174,37 +194,96 @@ class AdminDrawer extends StatelessWidget {
                           );
                         },
                       ),
-// =========================
-// Subject Management
-// =========================
 ListTile(
   leading: const Icon(
-    Icons.menu_book,
+    Icons.table_chart_rounded, // Timetable ke liye icon
     color: Colors.white,
   ),
   title: Text(
-    "Subject Management",
+    'Add Timetable',
     style: GoogleFonts.poppins(
       color: Colors.white,
-      fontSize: 16,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
     ),
   ),
-  trailing: const Icon(
-    Icons.chevron_right,
-    color: Colors.white,
-  ),
   onTap: () {
+    // Pehle Drawer close hoga
     Navigator.pop(context);
 
+    // Stream / Screen open hogi
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            SubjectManagementScreen(),
+        builder: (context) => const AdminAddTimetableScreen(),
       ),
     );
   },
 ),
+                      // =========================
+                      // Subject Management
+                      // =========================
+                      ListTile(
+                        leading: const Icon(
+                          Icons.menu_book,
+                          color: Colors.white,
+                        ),
+                        title: Text(
+                          "Subject Management",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SubjectManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // =========================
+                      // Date Sheet
+                      // =========================
+                      ListTile(
+                        leading: const Icon(
+                          Icons.description_outlined,
+                          color: Colors.white,
+                        ),
+                        title: Text(
+                          "Date Sheet",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AdminDatesheetScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
                       // =========================
                       // Admission Form
                       // =========================
@@ -225,16 +304,21 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
-                          Navigator.pop(context); // Drawer ko pehle close karein
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AdmissionFormScreen(),
+                          Navigator.pop(context);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const AdmissionFormScreen(),
                             ),
                           );
                         },
                       ),
 
+                      // =========================
+                      // Fee Management
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.payments_outlined,
@@ -252,15 +336,21 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const FeeManagementScreen(),
+                              builder: (context) =>
+                                  const FeeManagementScreen(),
                             ),
                           );
                         },
                       ),
 
+                      // =========================
+                      // Attendance
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.how_to_reg,
@@ -278,15 +368,21 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AttendanceScreen(),
+                              builder: (context) =>
+                                  const AttendanceScreen(),
                             ),
                           );
                         },
                       ),
 
+                      // =========================
+                      // Academic Calendar
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.calendar_month_outlined,
@@ -304,16 +400,21 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const AcademicCalendarScreen(),
+                                  const AcademicCalendarAdminScreen(),
                             ),
                           );
                         },
                       ),
 
+                      // =========================
+                      // Notifications
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.notification_add,
@@ -331,15 +432,21 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => NotificationsScreen(),
+                              builder: (context) =>
+                                  const NotificationsScreen(),
                             ),
                           );
                         },
                       ),
 
+                      // =========================
+                      // Complaints
+                      // =========================
                       ListTile(
                         leading: const Icon(
                           Icons.chat_bubble_outline,
@@ -357,73 +464,18 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ComplaintsScreen(),
+                              builder: (context) =>
+                                  const ComplaintsScreen(),
                             ),
                           );
                         },
                       ),
 
-                      ListTile(
-                        leading: const Icon(
-                          Icons.bar_chart,
-                          color: Colors.white,
-                        ),
-                        title: Text(
-                          "Reports",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white,
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ReportsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // =========================
-                      // Settings
-                      // =========================
-                      ListTile(
-                        leading: const Icon(
-                          Icons.settings,
-                          color: Colors.white,
-                        ),
-                        title: Text(
-                          "Settings",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white,
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // =========================
-                      // Divider
-                      // =========================
                       const Divider(
                         color: Colors.white38,
                         thickness: 1,
@@ -449,10 +501,13 @@ ListTile(
                           color: Colors.white,
                         ),
                         onTap: () {
+                          Navigator.pop(context);
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AboutAppScreen(),
+                              builder: (context) =>
+                                  const AboutAppScreen(),
                             ),
                           );
                         },

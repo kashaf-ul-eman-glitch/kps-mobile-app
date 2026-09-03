@@ -13,38 +13,6 @@ import 'package:image_picker/image_picker.dart';
 /// =====================================================================
 /// ADMISSION FORM SCREEN
 /// =====================================================================
-///
-/// FIRESTORE STRUCTURE:
-///
-/// classes
-///   └── Grade 1
-///       └── students
-///           └── autoId
-///               ├── studentName
-///               ├── class
-///               ├── section
-///               ├── email
-///               ├── parentUid
-///               ├── admissionStatus
-///               └── ...
-///
-/// PARENT AUTH:
-///
-/// Firebase Authentication:
-///     Parent Email
-///     Password = Parent@123
-///
-/// Firestore:
-///
-/// users
-///   └── parentUid
-///       ├── role: Parent
-///       ├── email
-///       ├── isFirstLogin: true
-///       └── createdAt
-///
-/// On first login, Login Screen should check isFirstLogin.
-/// =====================================================================
 
 class AdmissionFormScreen extends StatefulWidget {
   const AdmissionFormScreen({super.key});
@@ -126,11 +94,8 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
     'Grade 12',
   ];
 
-  final List<String> sectionList = [
-    'Section A',
-    'Section B',
-    'Section C',
-  ];
+  // Default Sections List (Fallback and Initial Values)
+  final List<String> _defaultSections = ['Pink', 'Blue'];
 
   // =====================================================================
   // FAMILY / PARENT FIELDS
@@ -212,6 +177,72 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
     emailController.dispose();
 
     super.dispose();
+  }
+
+  // =====================================================================
+  // ADD NEW SECTION (ADMIN FEATURE)
+  // =====================================================================
+
+  Future<void> _showAddSectionDialog() async {
+    final TextEditingController newSectionController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add New Section'),
+          content: TextField(
+            controller: newSectionController,
+            decoration: const InputDecoration(
+              labelText: 'Section Name (e.g. Pink, Blue)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final String sectionName = newSectionController.text.trim();
+                if (sectionName.isNotEmpty) {
+                  try {
+                    await _firestore.collection('sections').doc(sectionName).set({
+                      'name': sectionName,
+                      'createdAt': FieldValue.serverTimestamp(),
+                    });
+
+                    if (mounted) {
+                      setState(() {
+                        selectedSection = sectionName;
+                      });
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Section "$sectionName" added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error adding section: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // =====================================================================
@@ -452,23 +483,37 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
   }
 
   // =====================================================================
-  // CREATE PARENT FIREBASE AUTH ACCOUNT
+  // FIND EXISTING PARENT BY EMAIL
   // =====================================================================
-  //
-  // VERY IMPORTANT:
-  //
-  // We use a SECONDARY Firebase App.
-  //
-  // Therefore:
-  //
-  // Admin remains logged into the main FirebaseAuth.instance.
-  //
-  // Parent account is created on:
-  //
-  // FirebaseAuth.instanceFor(app: parentApp)
-  //
-  // After creation, secondary app is deleted.
-  //
+
+  Future<String?> _findExistingParentUid(
+    String email,
+  ) async {
+    try {
+      final QuerySnapshot<Map<String, dynamic>> query =
+          await _firestore
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .where('role', isEqualTo: 'Parent')
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        return null;
+      }
+
+      return query.docs.first.id;
+    } catch (e) {
+      debugPrint(
+        'Find Existing Parent Error: $e',
+      );
+
+      return null;
+    }
+  }
+
+  // =====================================================================
+  // CREATE PARENT FIREBASE AUTH ACCOUNT
   // =====================================================================
 
   Future<String> _createParentAccount(
@@ -510,10 +555,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
       final String parentUid =
           parentUser.uid;
 
-      // ================================================================
-      // CREATE USERS DOCUMENT
-      // ================================================================
-
       await _firestore
           .collection('users')
           .doc(parentUid)
@@ -536,6 +577,13 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
       );
 
       if (e.code == 'email-already-in-use') {
+        final String? existingUid =
+            await _findExistingParentUid(email);
+
+        if (existingUid != null) {
+          return existingUid;
+        }
+
         throw Exception(
           'This parent email already has a Firebase account. '
           'Please use another email address.',
@@ -610,10 +658,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
       return;
     }
 
-    // ================================================================
-    // CHECK ADMIN LOGIN
-    // ================================================================
-
     final String? currentUid =
         _auth.currentUser?.uid;
 
@@ -634,6 +678,8 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
       _saving = true;
     });
 
+    bool linkedToExistingParent = false;
+
     try {
       final String parentEmail =
           emailController.text
@@ -641,10 +687,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
               .toLowerCase();
 
       String parentUid = currentUid;
-
-      // ================================================================
-      // EDIT EXISTING ADMISSION
-      // ================================================================
 
       if (_editingDocument != null) {
         final DocumentSnapshot<Map<String, dynamic>>
@@ -659,23 +701,26 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
               (data?['parentUid'] as String?) ??
                   currentUid;
         }
+
+        final String? matchedUid =
+            await _findExistingParentUid(parentEmail);
+
+        if (matchedUid != null) {
+          parentUid = matchedUid;
+        }
+      } else {
+        final String? existingParentUid =
+            await _findExistingParentUid(parentEmail);
+
+        if (existingParentUid != null) {
+          parentUid = existingParentUid;
+          linkedToExistingParent = true;
+        } else {
+          parentUid = await _createParentAccount(
+            parentEmail,
+          );
+        }
       }
-
-      // ================================================================
-      // NEW ADMISSION
-      // ================================================================
-
-      else {
-        // Create Parent Authentication Account
-        parentUid =
-            await _createParentAccount(
-          parentEmail,
-        );
-      }
-
-      // ================================================================
-      // UPLOAD PHOTO
-      // ================================================================
 
       String photoUrl =
           _editingPhotoUrl ?? '';
@@ -697,10 +742,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
           );
         }
       }
-
-      // ================================================================
-      // STUDENT DATA
-      // ================================================================
 
       final Map<String, dynamic> studentData =
           {
@@ -743,10 +784,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
         'photoUrl':
             photoUrl,
 
-        // ============================================================
-        // FAMILY
-        // ============================================================
-
         'fatherName':
             fatherNameController.text.trim(),
 
@@ -765,10 +802,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
         'motherName':
             motherNameController.text.trim(),
 
-        // ============================================================
-        // GUARDIAN
-        // ============================================================
-
         'guardianName':
             guardianNameController.text.trim(),
 
@@ -778,16 +811,8 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
         'guardianPhone':
             guardianPhoneController.text.trim(),
 
-        // ============================================================
-        // ADDRESS
-        // ============================================================
-
         'permanentAddress':
             permanentAddressController.text.trim(),
-
-        // ============================================================
-        // PARENT LOGIN
-        // ============================================================
 
         'email':
             parentEmail,
@@ -795,24 +820,12 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
         'parentUid':
             parentUid,
 
-        // ============================================================
-        // ADMISSION STATUS
-        // ============================================================
-
         'admissionStatus':
             'Pending',
-
-        // ============================================================
-        // TIMESTAMP
-        // ============================================================
 
         'updatedAt':
             FieldValue.serverTimestamp(),
       };
-
-      // ================================================================
-      // NEW ADMISSION
-      // ================================================================
 
       if (_editingDocument == null) {
         studentData['createdAt'] =
@@ -827,38 +840,24 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Admission saved successfully. Parent account created successfully.',
+              linkedToExistingParent
+                  ? 'Admission saved successfully. This child has been linked to the existing parent account.'
+                  : 'Admission saved successfully. Parent account created successfully.',
             ),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
+            duration: const Duration(seconds: 4),
           ),
         );
-      }
-
-      // ================================================================
-      // UPDATE EXISTING ADMISSION
-      // ================================================================
-
-      else {
+      } else {
         final String oldClass =
             _editingClass ?? selectedClass!;
-
-        // --------------------------------------------------------------
-        // SAME CLASS
-        // --------------------------------------------------------------
 
         if (oldClass == selectedClass) {
           await _editingDocument!
               .update(studentData);
-        }
-
-        // --------------------------------------------------------------
-        // CLASS CHANGED
-        // --------------------------------------------------------------
-
-        else {
+        } else {
           final DocumentReference<Map<String, dynamic>>
               newDocument =
               _firestore
@@ -1005,7 +1004,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
 
       religionController.text =
           (data['religion'] ?? '').toString();
-
       casteController.text =
           (data['caste'] ?? '').toString();
 
@@ -1739,20 +1737,12 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
 
       body: Stack(
         children: [
-          // ==============================================================
-          // BACKGROUND
-          // ==============================================================
-
           Positioned.fill(
             child: Image.asset(
               'assets/images/background.jpg',
               fit: BoxFit.cover,
             ),
           ),
-
-          // ==============================================================
-          // DARK OVERLAY
-          // ==============================================================
 
           Positioned.fill(
             child: Container(
@@ -1762,10 +1752,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
               ),
             ),
           ),
-
-          // ==============================================================
-          // CONTENT
-          // ==============================================================
 
           SafeArea(
             child:
@@ -1783,10 +1769,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
 
                 child: Column(
                   children: [
-                    // ====================================================
-                    // EDIT MODE
-                    // ====================================================
-
                     if (_editingDocument !=
                         null)
                       Container(
@@ -1868,10 +1850,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                         ),
                       ),
 
-                    // ====================================================
-                    // SCHOOL LOGO
-                    // ====================================================
-
                     Container(
                       width: 90,
                       height: 90,
@@ -1938,10 +1916,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                     const SizedBox(
                       height: 20,
                     ),
-
-                    // ====================================================
-                    // STUDENT PHOTO
-                    // ====================================================
 
                     GestureDetector(
                       onTap:
@@ -2027,10 +2001,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                     const SizedBox(
                       height: 25,
                     ),
-
-                    // ====================================================
-                    // STUDENT INFORMATION
-                    // ====================================================
 
                     _sectionCard(
                       title:
@@ -2140,23 +2110,7 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                           },
                         ),
 
-                        _buildDropdown(
-                          label:
-                              'Section',
-                          icon:
-                              Icons.groups,
-                          value:
-                              selectedSection,
-                          items:
-                              sectionList,
-                          onChanged:
-                              (value) {
-                            setState(() {
-                              selectedSection =
-                                  value;
-                            });
-                          },
-                        ),
+                        _buildSectionDropdown(),
 
                         _buildTextField(
                           controller:
@@ -2174,10 +2128,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                     const SizedBox(
                       height: 18,
                     ),
-
-                    // ====================================================
-                    // FAMILY INFORMATION
-                    // ====================================================
 
                     _sectionCard(
                       title:
@@ -2346,10 +2296,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                       height: 25,
                     ),
 
-                    // ====================================================
-                    // SUBMIT / UPDATE BUTTON
-                    // ====================================================
-
                     SizedBox(
                       width:
                           double.infinity,
@@ -2434,10 +2380,6 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
                       height: 30,
                     ),
 
-                    // ====================================================
-                    // SAVED ADMISSIONS
-                    // ====================================================
-
                     _savedAdmissionsSection(),
 
                     const SizedBox(
@@ -2450,6 +2392,109 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // =====================================================================
+  // DYNAMIC SECTION DROPDOWN WITH ADD BUTTON (ADMIN)
+  // =====================================================================
+
+  Widget _buildSectionDropdown() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _firestore.collection('sections').snapshots(),
+      builder: (context, snapshot) {
+        List<String> sections = List.from(_defaultSections);
+
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          final fetchedSections = snapshot.data!.docs
+              .map((doc) => doc.data()['name']?.toString() ?? '')
+              .where((name) => name.isNotEmpty)
+              .toList();
+
+          for (var sec in fetchedSections) {
+            if (!sections.contains(sec)) {
+              sections.add(sec);
+            }
+          }
+        }
+
+        if (selectedSection != null && !sections.contains(selectedSection)) {
+          sections.add(selectedSection!);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: selectedSection,
+                  dropdownColor: Colors.grey.shade900,
+                  style: const TextStyle(color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.white70,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: 'Section',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    prefixIcon: const Icon(
+                      Icons.groups,
+                      color: Colors.white70,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.30),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  items: sections
+                      .map((item) => DropdownMenuItem<String>(
+                            value: item,
+                            child: Text(item),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedSection = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Section is required';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.30),
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  tooltip: 'Add New Section',
+                  onPressed: _showAddSectionDialog,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -2765,7 +2810,7 @@ class _AdmissionFormScreenState extends State<AdmissionFormScreen> {
   }
 
   // =====================================================================
-  // DROPDOWN
+  // GENERAL DROPDOWN
   // =====================================================================
 
   Widget _buildDropdown({

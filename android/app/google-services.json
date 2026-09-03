@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "531273892536",
-    "project_id": "app-flutter-17067",
-    "storage_bucket": "app-flutter-17067.firebasestorage.app"
+    "project_number": "335551343963",
+    "project_id": "kps-mobile-app-flutter",
+    "storage_bucket": "kps-mobile-app-flutter.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:531273892536:android:7f53ce2495121768dc6a4d",
+        "mobilesdk_app_id": "1:335551343963:android:dec37d43ce80782c3b7e7e",
         "android_client_info": {
           "package_name": "com.example.small_app_flutter"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDHHrVO_10mSPt6hbzY4eMNUTWPa6w_rKM"
+          "current_key": "AIzaSyAwCA09BSqVZm4OexOfeQswYWD9ZczUidA"
         }
       ],
       "services": {

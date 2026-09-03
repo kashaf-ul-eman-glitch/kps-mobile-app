@@ -1,19 +1,24 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class MyProfileScreen extends StatelessWidget {
-  final String teacherName;
-  final String designation;
+class MyProfileScreen extends StatefulWidget {
+  const MyProfileScreen({super.key});
 
-  const MyProfileScreen({
-    super.key,
-    this.teacherName = 'Mr. Ahmed Khan',
-    this.designation = 'Senior Science Teacher',
-  });
+  @override
+  State<MyProfileScreen> createState() => _MyProfileScreenState();
+}
+
+class _MyProfileScreenState extends State<MyProfileScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
+    final User? currentUser = _auth.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.brown.shade800,
@@ -41,90 +46,146 @@ class MyProfileScreen extends StatelessWidget {
           child: Container(
             color: Colors.black.withValues(alpha: 0.25),
             child: SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                // Query teachers collection using logged-in user's email
+                stream: (currentUser?.email != null)
+                    ? _firestore
+                        .collection('teachers')
+                        .where('email', isEqualTo: currentUser!.email!.toLowerCase())
+                        .snapshots()
+                    : const Stream.empty(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  }
 
-                    // Male Teacher Avatar (Icons.person)
-                    Center(
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.2),
-                          border: Border.all(color: Colors.white, width: 2),
+                  Map<String, dynamic> data = {};
+
+                  if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+                    data = snapshot.data!.docs.first.data();
+                  }
+
+                  // Field fallbacks to match Admin screen data
+                  final String name = data['fullName']?.toString() ??
+                      data['name']?.toString() ??
+                      currentUser?.displayName ??
+                      'Teacher Profile';
+
+                  final String designation = data['role']?.toString() ??
+                      data['designation']?.toString() ??
+                      'Subject Teacher';
+
+                  final String email = data['email']?.toString() ??
+                      currentUser?.email ??
+                      'N/A';
+
+                  final String phone = data['phone']?.toString() ?? 'N/A';
+
+                  final String department = data['subject']?.toString() ??
+                      data['department']?.toString() ??
+                      data['qualification']?.toString() ??
+                      'N/A';
+
+                  final String teacherId = data['employeeId']?.toString() ??
+                      data['teacherId']?.toString() ??
+                      'N/A';
+
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Center(
+                          child: Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.2),
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const ClipOval(
+                              child: Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: const ClipOval(
-                          child: Icon(
-                            Icons.person,
-                            size: 60,
+                        const SizedBox(height: 15),
+                        Text(
+                          name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    Text(
-                      teacherName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      designation,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    // Profile Details inside Glassmorphic Transparent Container
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.brown.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        children: [
-                          _buildProfileDetailTile(
-                            icon: Icons.email_outlined,
-                            title: 'Email Address',
-                            value: 'ahmed.khan@school.edu.pk',
+                        Text(
+                          designation,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white70,
                           ),
-                          const Divider(color: Colors.white24, indent: 20, endIndent: 20),
-                          _buildProfileDetailTile(
-                            icon: Icons.phone_outlined,
-                            title: 'Phone Number',
-                            value: '+92 300 1234567',
+                        ),
+                        const SizedBox(height: 25),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.brown.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
                           ),
-                          const Divider(color: Colors.white24, indent: 20, endIndent: 20),
-                          _buildProfileDetailTile(
-                            icon: Icons.school_outlined,
-                            title: 'Department',
-                            value: 'Science & Mathematics',
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            children: [
+                              _buildProfileDetailTile(
+                                icon: Icons.email_outlined,
+                                title: 'Email Address',
+                                value: email,
+                              ),
+                              const Divider(
+                                color: Colors.white24,
+                                indent: 20,
+                                endIndent: 20,
+                              ),
+                              _buildProfileDetailTile(
+                                icon: Icons.phone_outlined,
+                                title: 'Phone Number',
+                                value: phone,
+                              ),
+                              const Divider(
+                                color: Colors.white24,
+                                indent: 20,
+                                endIndent: 20,
+                              ),
+                              _buildProfileDetailTile(
+                                icon: Icons.school_outlined,
+                                title: 'Subject / Qualification',
+                                value: department,
+                              ),
+                              const Divider(
+                                color: Colors.white24,
+                                indent: 20,
+                                endIndent: 20,
+                              ),
+                              _buildProfileDetailTile(
+                                icon: Icons.badge_outlined,
+                                title: 'Employee ID',
+                                value: teacherId,
+                              ),
+                            ],
                           ),
-                          const Divider(color: Colors.white24, indent: 20, endIndent: 20),
-                          _buildProfileDetailTile(
-                            icon: Icons.badge_outlined,
-                            title: 'Teacher ID',
-                            value: 'T-2026-88',
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
